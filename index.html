@@ -1,0 +1,20 @@
+<html>
+
+<head>
+  <title>WebSockets test</title>
+  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+  <script>
+  var socket = io.connect('http://localhost');
+  socket.on('news', function (data) {
+    console.log(data);
+    socket.emit('my other event', { my: 'data' });
+  });
+</script>
+</head>
+
+<body>
+  <h1>Test</h1>
+</body>
+
+
+</html>

@@ -409,6 +409,7 @@ function onDataReceived(wsSession, message) {
 
       else if (commandString.substr(0, 22) === "ReceiveCompressedData=") {
 
+        var wsSessionx;
         var receiveCompressedDataValue = commandString.substr(22);
         var receiveCompressedDataValueInt = 0;
 
@@ -416,50 +417,67 @@ function onDataReceived(wsSession, message) {
           wsSession.send("ReceiveCompressedData=ERROR");
           return;
         }
-
+        
         receiveCompressedDataValueInt = parseInt(receiveCompressedDataValue);
 
-        allSessionsList.forEach(function (session, index) {
-          session.allWebSocketSessionList.forEach(function (wsSessionx, index) {
-            if (wsSessionx.session.sessionID == wsSessionx.sessionID) {
-              wsSessionx.receiveCompressedData = Boolean(receiveCompressedDataValueInt);
-              //TODO - break not function inside .forEach function
-              //break;
+        for (var key in allSessionsList) {
+          if (allSessionsList.hasOwnProperty(key)) {
+            var session = allSessionsList[key];
+            for (var wsKey in session.allWebSocketSessionList) {
+              if (session.allWebSocketSessionList.hasOwnProperty(wsKey)) {
+                wsSessionx = session.allWebSocketSessionList[wsKey];
+                if (wsSessionx.session.sessionID === wsSessionx.sessionID) {
+                  wsSessionx.receiveCompressedData = Boolean(receiveCompressedDataValueInt);
+                  break;
+                }
+              }
             }
-          })
-        });
+          }
+        }
 
-        wsSessionx.Send("OK"); //message received
+        wsSession.send("OK"); // message received
       }
 
       else if ((commandString.substr(0, 5) === "NEXT=") || (commandString.substr(0, 7) === "SYNCON=") || (commandString.substr(0, 8) === "SYNCOFF=")) {
 
-        var indexOfEqual = commandString.indexOf("=") + 1;
-        var devicetypeNextFlag = commandString.substr(indexOfEqual);
-        devicetypeNextFlag = parseInt(devicetypeNextFlag);
+        var indexOfEqual, devicetypeFlag, deviceName;
+          
+        indexOfEqual = commandString.indexOf("=") + 1; // index of equal sign
+        devicetypeFlag = parseInt(commandString.substr(indexOfEqual));  // Get device type
 
-        // TODO - add the other condition as well
-        if (devicetypeNextFlag === 0) {
-          //if ((devicetypeNextFlag === 0) || (Enum.IsDefined(typeof (DeviceTypeEnum), devicetypeNextFlag) == false)) {
+        // Get device name
+        for (var key in deviceType) {
+          if (deviceType[key] === devicetypeFlag)
+            deviceName = key;
+        }
 
-          wsSessionx.send(commandString.substr(0, indexOfEqual) + "ERROR");
+        // Send an error for an unknown device
+        if ((devicetypeFlag === deviceType.unknown) || !deviceName) {
+          wsSession.send(commandString.substr(0, indexOfEqual) + "ERROR");
           return;
         }
 
-        allSessionsList.forEach(function (session, index) {
-          session.allWebSocketSessionList.forEach(function (wsSessionx, index) {
-            if (wsSessionx.session.sessionID == wsSessionx.sessionID) {
-              if (commandString.substr(0, 5) === "NEXT=")
-                setChannelStatus(devicetypeNextFlag, true);
-              else if (commandString.substr(0, 7) === "SYNCON=")
-                setSyncStatus(devicetypeNextFlag, true);
-              else if (commandString.substr(0, 8) === "SYNCOFF=")
-                setSyncStatus(devicetypeNextFlag, false);
-              // TODO - break is not supported in forEach
-              //break;
+        for (var key in allSessionsList) {
+          if (allSessionsList.hasOwnProperty(key)) {
+            var session = allSessionsList[key];
+            for (var wsKey in session.allWebSocketSessionList) {
+              if (session.allWebSocketSessionList.hasOwnProperty(wsKey)) {
+                wsSessionx = session.allWebSocketSessionList[wsKey];
+                if (wsSessionx.session.sessionID === wsSessionx.sessionID) {
+                  if (commandString.substr(0, 5) === "NEXT=")
+                    setChannelStatus(deviceName, true);
+                  else if (commandString.substr(0, 7) === "SYNCON=")
+                    setSyncStatus(deviceName, true);
+                  else if (commandString.substr(0, 8) === "SYNCOFF=")
+                    setSyncStatus(deviceName, false);
+                  //break;
+                }
+              }
             }
-          });
-        });
+          }
+        }
+
+        wsSession.send("OK"); // Message received
 
       }
     }

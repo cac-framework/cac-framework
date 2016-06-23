@@ -1,19 +1,18 @@
-var app = require('express')();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
+var WebSocketServer = require('ws').Server;
+var wss = new WebSocketServer({ port: 8080 });
 
-server.listen(80);
+wss.on('connection', function connection(ws) {
 
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
-});
-
-io.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
   });
+
+  ws.send('something');
+  
 });
+
+return;
+
 
 /**
  * Enum for device types
@@ -58,27 +57,27 @@ var streamChannelSettings = {
   channelFree: true
 };
 
-function deviceControllerCommand(command, wsSession) {
+/**
+ * @function deviceControllerCommand
+ * @description - description
+ * @param {String} command - command
+ * @param {String} compressData - compressData
+ * @param {Object} wsSession - wsSession
+ */
+function deviceControllerCommand(command, compressData, wsSession) {
   switch (command.DeviceType) {
     case 1:
-      var seletonx = {};
+      var seletonx = command;
       skeletonx.Device.LastUpdateDateTime = new Date().getTime();
-      //skeletonx.Device.SocketID = ws_sessionx.SessionID;
+      skeletonx.Device.SocketID = wsSession.sessionID;
 
-      try {
-
-        if (!(skeletonx.Device.SessionID in allSessionsList)) {
-          allSessionsList[skeletonx.Device.SessionID] = new Session(skeletonx.Device.SessionID, wsSession);
-        }
-
-        allSessionsList[skeletonx.Device.SessionID].allSkeletonList[skeletonx.Device.DeviceID] = skeletonx;
-
-        StaticValues.WSocketSrv.SendDataToSessionClients(skeletonx.Device.SessionID, skeletonx.Device, ws_sessionx.SessionID, commandString, compressData);
-
+      if (!(skeletonx.Device.SessionID in allSessionsList)) {
+        allSessionsList[skeletonx.Device.SessionID] = new Session(skeletonx.Device.SessionID, wsSession);
       }
-      catch (err) {
-        logger.Error("WS message received '\"DeviceType\":1' failed: " + err);
-      }
+
+      allSessionsList[skeletonx.Device.SessionID].allSkeletonList[skeletonx.Device.DeviceID] = skeletonx;
+      sendDataToSessionClients(skeletonx.Device.SessionID, skeletonx.Device, wsSession.sessionID, commandString, compressData);
+      break;
     case 2:
     case 3:
     case 4:
@@ -147,7 +146,7 @@ function sendDataToSessionClients(sessionID, deviceSource, senderSocketID, data_
     allSessionsList[sessionID].allWebSocketSessionList.forEach(function (wsSession, index) {
 
       if ((wsSession === null) || (wsSession.session === null) || (wsSession.session.sessionID === null) || (wsSession.streamChannelIsFree(deviceSource.DeviceType) === false))
-        continue;
+        return;
 
       if ((wsSession.session.sessionID !== senderSocketID) && ((wsSession.transmissionInProgress === false) || (deviceSource.ObligatoryTransmission === true))) {
 
@@ -155,7 +154,7 @@ function sendDataToSessionClients(sessionID, deviceSource, senderSocketID, data_
         if (deviceSource != null) {
           var foundIndex = wsSession.findkDeviceException(deviceSource);
           if (foundIndex > -1)
-            continue;
+            return;
         }
 
         try {
@@ -205,12 +204,12 @@ function findkDeviceException(deviceException) {
   for (var i = 0; i < ReceiveExceptions.Count; i++) {
     if (ReceiveExceptions[i].DeviceType != DeviceTypeEnum.Unknown) {
       if (ReceiveExceptions[i].DeviceType != deviceException.DeviceType)
-        continue;
+        return;
     }
 
     if ((ReceiveExceptions[i].DeviceID != null) && (ReceiveExceptions[i].DeviceID != "")) {
       if (ReceiveExceptions[i].DeviceID != deviceException.DeviceID)
-        continue;
+        return;
     }
 
     return i;

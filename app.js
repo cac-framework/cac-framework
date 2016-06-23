@@ -3,15 +3,19 @@ var wss = new WebSocketServer({ port: 8080 });
 
 wss.on('connection', function connection(ws) {
 
+  // WebSockets ID
+  var wsSession = { sessionID: ws.upgradeReq.headers["sec-websocket-key"] };
+
   ws.on('message', function incoming(message) {
-    console.log('received: %s', message);
+    //console.log('received: %s', message);
+    //var command = JSON.parse(message);
+    onDataReceived(wsSession, message);
   });
 
   ws.send('something');
-  
+
 });
 
-return;
 
 
 /**
@@ -51,10 +55,10 @@ var allSessionsList = {};
 // Contains all streamChannelSettings (key: deviceType, value: streamChannelSettings)
 var allStreamChannelSettings = {};
 
-var streamChannelSettings = {
-  deviceType: deviceType.unknown,
-  syncOn: false,
-  channelFree: true
+function streamChannelSettings(deviceType) {
+  this.deviceType = deviceType;
+  this.syncOn = false;
+  this.channelFree = true;
 };
 
 /**
@@ -126,6 +130,52 @@ function WebSocketDeviceSession() {
   addRGBException();
 }
 
+// TODO - merge addDeviceException, removeDeviceException and clearAllDeviceException
+/**
+ * @function deviceControllerCommand
+ * @description - description
+ * @param {Object} device - A device object
+ * @return {Boolean} - A boolean value indicating whether the exception is stored or not.
+ */
+WebSocketDeviceSession.prototype.addDeviceException = function (device) {
+  device.lastUpdateDateTime = new Date().getTime();
+  if (findkDeviceException(device) < 0) {
+    receiveExceptions.push(device);
+    return true;
+  }
+  else
+    return false;
+}
+
+/**
+ * @function removeDeviceException
+ * @description -
+ * @param {Object} device - A device object
+ * @return {Boolean} -
+ */
+WebSocketDeviceSession.prototype.removeDeviceException = function (device) {
+  device.lastUpdateDateTime = new Date().getTime();
+
+  var deviceIndex = findkDeviceException(device);
+  if (deviceIndex < 0)
+    return false;
+  else {
+    receiveExceptions.splice(deviceIndex, 1);
+    return true;
+  }
+
+}
+
+/**
+ * @function clearAllDeviceException
+ * @description -
+ * @return {Boolean} -
+ */
+WebSocketDeviceSession.prototype.clearAllDeviceException = function (device) {
+  receiveExceptions = [];
+  return true;
+}
+
 /**
  * @function sendDataToSessionClients
  * @description - Sends data to all clients with same session ID
@@ -192,6 +242,16 @@ function setChannelStatus(deviceType, setChannelFree) {
   allStreamChannelSettings[deviceType].channelFree = setChannelFree;
 }
 
+/**
+ * @function setSyncStatus
+ * @description - Sets synchronisation status of a channel
+ * @param {Number} deviceType - The device type
+ * @param {Boolean} setSyncOn - True if the channel is synchronised
+ */
+function setSyncStatus(deviceType, setSyncOn) {
+  allStreamChannelSettings[deviceType].syncOn = setSyncOn;
+}
+
 
 /**
  * @function findkDeviceException
@@ -232,4 +292,194 @@ function Device() {
   this.sessionID = "";
   this.deviceExceptionCmd = deviceExceptionCmdEnum.unknown;
   this.obligatoryTransmission = false;
+}
+
+
+/**
+ * @function onDataReceived
+ * @description - Handles data sent from a client
+ * @param {String} wsSession - The WebSockets session
+ * @param {String} message - The message received
+ */
+function onDataReceived(wsSession, message) {
+
+  var commandsList = [];
+  var commandString = "";
+  var compressData = null;
+  var sessionID = "";
+
+  if (message.ContainerCompression) {
+    // todo - Uncompress
+  }
+
+  if (message.Device) {
+    commandsList.push(message);
+    deviceControllerCommand(message, compressData, wsSession);
+    commandsList = [];
+    wsSession.send("OK"); // message received
+  }
+  else if (message.DeviceID) {
+    deviceCommand(message, wsSession.sessionID); // message is device
+    commandsList = [];
+  }
+  else {
+    commandsList = message.split(",");
+  }
+
+  for (var cmdInd = 0; cmdInd < commandsList.length; cmdInd++) {
+
+    commandString = commandsList[cmdInd];
+
+    try {
+
+      if (commandString.substr(0, 10) === "SessionID=") {
+
+        try {
+          sessionID = commandString.substr(10);
+          if ((sessionID === null) || (sessionID === "")) {
+            wsSession.send("SessionID=ERROR");
+            return;
+          }
+
+          if (!allSessionsList.sessionID) {
+            var sessionx = new Session(sessionID, wsSession);
+            allSessionsList[sessionID] = sessionx;
+          }
+        }
+        catch (err) {
+          console.log("WS message received 'SessionID' failed A: " + err);
+        }
+
+        // Get the WebSocket session and add it to sessions list
+        var wsDeviceSession = null;
+
+        allSessionsList.forEach(function (session, index) {
+          if (session.allWebSocketSessionList[wsSession.sessionID]) {
+            wsDeviceSession = session.allWebSocketSessionList[wsSession.sessionID];
+            delete session.allWebSocketSessionList[wsSession.sessionID];
+          }
+        });
+
+        if (wsDeviceSession === null) {
+          wsDeviceSession = new WebSocketDeviceSession();
+          wsDeviceSession.session = wsSession;
+          wsDeviceSession.sessionID = wsSession.SessionID;
+        }
+
+        allSessionList[sessionID].allWebSocketSessionList[wsDeviceSession.sessionID] = wsDeviceSession;
+
+        ws_sessionx.Send("OK"); // Message received
+      }
+
+      else if (commandString.substr(0, 22) === "ReceiveCompressedData=") {
+
+        var receiveCompressedDataValue = commandString.substr(22);
+        var receiveCompressedDataValueInt = 0;
+
+        if (!receiveCompressedDataValue) {
+          wsSession.send("ReceiveCompressedData=ERROR");
+          return;
+        }
+
+        receiveCompressedDataValueInt = parseInt(receiveCompressedDataValue);
+
+        allSessionsList.forEach(function (session, index) {
+          session.allWebSocketSessionList.forEach(function (wsSessionx, index) {
+            if (wsSessionx.session.sessionID == wsSessionx.sessionID) {
+              wsSessionx.receiveCompressedData = Boolean(receiveCompressedDataValueInt);
+              //TODO - break not function inside .forEach function
+              //break;
+            }
+          })
+        });
+
+        wsSessionx.Send("OK"); //message received
+      }
+
+      else if ((commandString.substr(0, 5) === "NEXT=") || (commandString.substr(0, 7) === "SYNCON=") || (commandString.substr(0, 8) === "SYNCOFF=")) {
+
+        var indexOfEqual = commandString.indexOf("=") + 1;
+        var devicetypeNextFlag = commandString.substr(indexOfEqual);
+        devicetypeNextFlag = parseInt(devicetypeNextFlag);
+
+        // TODO - add the other condition as well
+        if (devicetypeNextFlag === 0) {
+          //if ((devicetypeNextFlag === 0) || (Enum.IsDefined(typeof (DeviceTypeEnum), devicetypeNextFlag) == false)) {
+
+          wsSessionx.send(commandString.substr(0, indexOfEqual) + "ERROR");
+          return;
+        }
+
+        allSessionsList.forEach(function (session, index) {
+          session.allWebSocketSessionList.forEach(function (wsSessionx, index) {
+            if (wsSessionx.session.sessionID == wsSessionx.sessionID) {
+              if (commandString.substr(0, 5) === "NEXT=")
+                setChannelStatus(devicetypeNextFlag, true);
+              else if (commandString.substr(0, 7) === "SYNCON=")
+                setSyncStatus(devicetypeNextFlag, true);
+              else if (commandString.substr(0, 8) === "SYNCOFF=")
+                setSyncStatus(devicetypeNextFlag, false);
+              // TODO - break is not supported in forEach
+              //break;
+            }
+          });
+        });
+
+      }
+    }
+    catch (err) {
+      //console.log(err);
+    }
+  }
+
+}
+
+
+/**
+ * @function deviceCommand
+ * @description - deviceCommand
+ * @param {Object} devicex - The device object
+ * @param {String} senderSocketID - senderSocketID
+ */
+function deviceCommand(devicex, senderSocketID) {
+
+  if ((devicex === null) || (devicex.SessionID === null))
+    return;
+
+  if (devicex.deviceExceptionCmd === deviceExceptionCmd.unknown)
+    return;
+
+  if (!(devicex.SessionID in allSessionsList))
+    return;
+
+  allSessionsList[devicex.sessionID].allWebSocketSessionList.forEach(function (wsSessionx, index) {
+    if (wsSessionx.session.sessionID === senderSocketID) {
+      if (devicex.deviceExceptionCmd == deviceExceptionCmd.addException)
+        wsSessionx.addDeviceException(devicex);
+      else if (devicex.deviceExceptionCmd == deviceExceptionCmd.removeException)
+        wsSessionx.removeDeviceException(devicex);
+      else if (devicex.deviceExceptionCmd == deviceExceptionCmd.clearAllExceptions)
+        wsSessionx.clearAllDeviceException();
+    }
+  });
+
+}
+
+
+/**
+ * @function initiateAllStreamChannelSettings
+ * @description - Initiates all stream channel settings
+ */
+function initiateAllStreamChannelSettings() {
+  
+  var scs = {};
+  allStreamChannelSettings = {};
+
+  for (var key in deviceType) {
+    if (deviceType.hasOwnProperty(key)) {
+      scs = new streamChannelSettings(deviceType[key]);
+      allStreamChannelSettings[key] = scs;
+    }
+  }
+
 }

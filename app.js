@@ -3,13 +3,13 @@ var wss = new WebSocketServer({ port: 8080 });
 
 wss.on('connection', function connection(ws) {
 
-  // WebSockets ID
-  var wsSession = { sessionID: ws.upgradeReq.headers["sec-websocket-key"] };
+  // Set WebSockets ID
+  ws.sessionID = ws.upgradeReq.headers["sec-websocket-key"];
 
   ws.on('message', function incoming(message) {
     //console.log('received: %s', message);
     //var command = JSON.parse(message);
-    onDataReceived(wsSession, message);
+    onDataReceived(ws, message);
   });
 
   ws.send('something');
@@ -97,6 +97,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
   }
 }
 
+
 function Session(sessionID, wsSession) {
 
   this.sessionID = sessionID;
@@ -115,7 +116,7 @@ function Session(sessionID, wsSession) {
     var newWebSocketDeviceSession = new WebSocketDeviceSession();
     newWebSocketDeviceSession.session = wsSession;
     newWebSocketDeviceSession.sessionID = wsSession.sessionID;
-    this.allWebSocketSessionList[newWebSocketDeviceSession.SessionID] = newWebSocketDeviceSession;
+    this.allWebSocketSessionList[newWebSocketDeviceSession.sessionID] = newWebSocketDeviceSession;
   }
 
 }
@@ -126,55 +127,114 @@ function WebSocketDeviceSession() {
   this.receiveExceptions = [];
   this.receiveCompressedData = false;
   this.session = {};
-  initiateAllStreamChannelSettings();
-  addRGBException();
-}
 
-// TODO - merge addDeviceException, removeDeviceException and clearAllDeviceException
-/**
- * @function deviceControllerCommand
- * @description - description
- * @param {Object} device - A device object
- * @return {Boolean} - A boolean value indicating whether the exception is stored or not.
- */
-WebSocketDeviceSession.prototype.addDeviceException = function (device) {
-  device.lastUpdateDateTime = new Date().getTime();
-  if (findkDeviceException(device) < 0) {
-    receiveExceptions.push(device);
-    return true;
-  }
-  else
-    return false;
-}
 
-/**
- * @function removeDeviceException
- * @description -
- * @param {Object} device - A device object
- * @return {Boolean} -
- */
-WebSocketDeviceSession.prototype.removeDeviceException = function (device) {
-  device.lastUpdateDateTime = new Date().getTime();
-
-  var deviceIndex = findkDeviceException(device);
-  if (deviceIndex < 0)
-    return false;
-  else {
-    receiveExceptions.splice(deviceIndex, 1);
-    return true;
+  // TODO - merge addDeviceException, removeDeviceException and clearAllDeviceException
+  /**
+   * @function deviceControllerCommand
+   * @description - description
+   * @param {Object} device - A device object
+   * @return {Boolean} - A boolean value indicating whether the exception is stored or not.
+   */
+  this.addDeviceException = function (device) {
+    device.lastUpdateDateTime = new Date().getTime();
+    if (this.findkDeviceException(device) < 0) {
+      this.receiveExceptions.push(device);
+      return true;
+    }
+    else
+      return false;
   }
 
+  /**
+   * @function removeDeviceException
+   * @description -
+   * @param {Object} device - A device object
+   * @return {Boolean} -
+   */
+  this.removeDeviceException = function (device) {
+    device.lastUpdateDateTime = new Date().getTime();
+
+    var deviceIndex = this.findkDeviceException(device);
+    if (deviceIndex < 0)
+      return false;
+    else {
+      this.receiveExceptions.splice(deviceIndex, 1);
+      return true;
+    }
+
+  }
+
+  /**
+   * @function clearAllDeviceException
+   * @description -
+   * @return {Boolean} -
+   */
+  this.clearAllDeviceException = function (device) {
+    this.receiveExceptions = [];
+    return true;
+  }
+
+  /**
+ * @function initiateAllStreamChannelSettings
+ * @description - Initiates all stream channel settings
+ */
+  this.initiateAllStreamChannelSettings = function () {
+
+    var scs = {};
+    allStreamChannelSettings = {};
+
+    for (var key in deviceType) {
+      if (deviceType.hasOwnProperty(key)) {
+        scs = new streamChannelSettings(deviceType[key]);
+        allStreamChannelSettings[key] = scs;
+      }
+    }
+
+  }
+
+  /**
+ * @function initiateAllStreamChannelSettings
+ * @description - Initiates all stream channel settings
+ */
+  this.addRGBException = function () {
+    var dev = new Device();
+    dev.deviceExceptionCmd = deviceExceptionCmd.addException;
+    dev.deviceType = deviceType.RGBVideo;
+    dev.sessionID = this.sessionID;
+    this.addDeviceException(dev);
+  }
+
+  /**
+ * @function findkDeviceException
+ * @description - findkDeviceException
+ * @param  {String} deviceException - deviceException
+ * @return {Number} - The index of the deviceException found in the receiveExceptions. Otherwise, it returns -1.
+ */
+  this.findkDeviceException = function (deviceException) {
+
+    for (var i = 0; i < this.receiveExceptions.length; i++) {
+      if (this.receiveExceptions[i].deviceType !== deviceType.unknown) {
+        if (this.receiveExceptions[i].deviceType !== deviceException.deviceType)
+          return;
+      }
+
+      if ((this.receiveExceptions[i].deviceID !== null) && (this.receiveExceptions[i].deviceID !== "")) {
+        if (this.receiveExceptions[i].deviceID !== deviceException.deviceID)
+          return;
+      }
+
+      return i;
+    }
+
+    return -1;
+  }
+
+  this.initiateAllStreamChannelSettings();
+  this.addRGBException();
 }
 
-/**
- * @function clearAllDeviceException
- * @description -
- * @return {Boolean} -
- */
-WebSocketDeviceSession.prototype.clearAllDeviceException = function (device) {
-  receiveExceptions = [];
-  return true;
-}
+
 
 /**
  * @function sendDataToSessionClients
@@ -252,34 +312,6 @@ function setSyncStatus(deviceType, setSyncOn) {
   allStreamChannelSettings[deviceType].syncOn = setSyncOn;
 }
 
-
-/**
- * @function findkDeviceException
- * @description - findkDeviceException
- * @param  {String} deviceException - deviceException
- * @return {Number} - The index of the deviceException found in the ReceiveExceptions. Otherwise, it returns -1.
- */
-function findkDeviceException(deviceException) {
-
-  for (var i = 0; i < ReceiveExceptions.Count; i++) {
-    if (ReceiveExceptions[i].DeviceType != DeviceTypeEnum.Unknown) {
-      if (ReceiveExceptions[i].DeviceType != deviceException.DeviceType)
-        return;
-    }
-
-    if ((ReceiveExceptions[i].DeviceID != null) && (ReceiveExceptions[i].DeviceID != "")) {
-      if (ReceiveExceptions[i].DeviceID != deviceException.DeviceID)
-        return;
-    }
-
-    return i;
-  }
-
-  return -1;
-}
-
-
-
 function Device() {
   this.id = 0;
   this.deviceID = "";     //in case of two connected wiimotes the guid, lanip, publicip and devicetype will be identical. The ID will be used tounoque identify them
@@ -290,7 +322,7 @@ function Device() {
   this.lastUpdateDateTime = new Date().getTime();
   this.socketID = "";
   this.sessionID = "";
-  this.deviceExceptionCmd = deviceExceptionCmdEnum.unknown;
+  this.deviceExceptionCmd = deviceExceptionCmd.unknown;
   this.obligatoryTransmission = false;
 }
 
@@ -353,22 +385,26 @@ function onDataReceived(wsSession, message) {
         // Get the WebSocket session and add it to sessions list
         var wsDeviceSession = null;
 
-        allSessionsList.forEach(function (session, index) {
-          if (session.allWebSocketSessionList[wsSession.sessionID]) {
-            wsDeviceSession = session.allWebSocketSessionList[wsSession.sessionID];
-            delete session.allWebSocketSessionList[wsSession.sessionID];
+        for (var key in allSessionsList) {
+          if (allSessionsList.hasOwnProperty(key)) {
+            var session = allSessionsList[key];
+            if (session.allWebSocketSessionList[wsSession.sessionID]) {
+              wsDeviceSession = session.allWebSocketSessionList[wsSession.sessionID];
+              delete session.allWebSocketSessionList[wsSession.sessionID];
+            }
           }
-        });
+        }
+
 
         if (wsDeviceSession === null) {
           wsDeviceSession = new WebSocketDeviceSession();
           wsDeviceSession.session = wsSession;
-          wsDeviceSession.sessionID = wsSession.SessionID;
+          wsDeviceSession.sessionID = wsSession.sessionID;
         }
 
-        allSessionList[sessionID].allWebSocketSessionList[wsDeviceSession.sessionID] = wsDeviceSession;
+        allSessionsList[sessionID].allWebSocketSessionList[wsDeviceSession.sessionID] = wsDeviceSession;
 
-        ws_sessionx.Send("OK"); // Message received
+        wsSession.send("OK"); // Message received
       }
 
       else if (commandString.substr(0, 22) === "ReceiveCompressedData=") {
@@ -462,24 +498,5 @@ function deviceCommand(devicex, senderSocketID) {
         wsSessionx.clearAllDeviceException();
     }
   });
-
-}
-
-
-/**
- * @function initiateAllStreamChannelSettings
- * @description - Initiates all stream channel settings
- */
-function initiateAllStreamChannelSettings() {
-  
-  var scs = {};
-  allStreamChannelSettings = {};
-
-  for (var key in deviceType) {
-    if (deviceType.hasOwnProperty(key)) {
-      scs = new streamChannelSettings(deviceType[key]);
-      allStreamChannelSettings[key] = scs;
-    }
-  }
 
 }

@@ -70,7 +70,7 @@ function streamChannelSettings(deviceType) {
  */
 function deviceControllerCommand(command, compressData, wsSession) {
   switch (command.Device.DeviceType) {
-    case 1:
+    case deviceType.Kinect:
       var skeletonx = command;
       skeletonx.Device.LastUpdateDateTime = new Date().getTime();
       skeletonx.Device.SocketID = wsSession.sessionID;
@@ -82,17 +82,81 @@ function deviceControllerCommand(command, compressData, wsSession) {
       allSessionsList[skeletonx.Device.SessionID].allSkeletonList[skeletonx.Device.DeviceID] = skeletonx;
       sendDataToSessionClients(skeletonx.Device.SessionID, skeletonx.Device, wsSession.sessionID, command, compressData);
       break;
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-      text = "Soon it is Weekend";
+    case deviceType.Wiimote:
+    case deviceType.WiiBalanceboard:
+      var wiimotex = command;
+      wiimotex.Device.LastUpdateDateTime = new Date().getTime();
+      wiimotex.Device.SocketID = wsSession.sessionID;
+
+      if (!(wiimotex.Device.SessionID in allSessionsList)) {
+        allSessionsList[wiimotex.Device.SessionID] = new Session(wiimotex.Device.SessionID, wsSession);
+      }
+
+      allSessionsList[wiimotex.Device.SessionID].allSkeletonList[wiimotex.Device.DeviceID] = wiimotex;
+      sendDataToSessionClients(wiimotex.Device.SessionID, wiimotex.Device, wsSession.sessionID, command, compressData);
       break;
-    case 0:
-    case 6:
-      text = "It is Weekend";
+    case deviceType.Mindwave:
+      var mindwavex = command;
+      mindwavex.Device.LastUpdateDateTime = new Date().getTime();
+      mindwavex.Device.SocketID = wsSession.sessionID;
+
+      if (!(mindwavex.Device.SessionID in allSessionsList)) {
+        allSessionsList[mindwavex.Device.SessionID] = new Session(mindwavex.Device.SessionID, wsSession);
+      }
+
+      allSessionsList[mindwavex.Device.SessionID].allSkeletonList[mindwavex.Device.DeviceID] = mindwavex;
+      sendDataToSessionClients(mindwavex.Device.SessionID, mindwavex.Device, wsSession.sessionID, command, compressData);
+      break;
+    case deviceType.RGBVideo:
+      var rgbvIdeox = command;
+      rgbvIdeox.Device.LastUpdateDateTime = new Date().getTime();
+      rgbvIdeox.Device.SocketID = wsSession.sessionID;
+
+      if (!(rgbvIdeox.Device.SessionID in allSessionsList)) {
+        allSessionsList[rgbvIdeox.Device.SessionID] = new Session(rgbvIdeox.Device.SessionID, wsSession);
+      }
+
+      allSessionsList[rgbvIdeox.Device.SessionID].allSkeletonList[rgbvIdeox.Device.DeviceID] = rgbvIdeox;
+      sendDataToSessionClients(rgbvIdeox.Device.SessionID, rgbvIdeox.Device, wsSession.sessionID, command, compressData);
+      break;
+    case deviceType.AndroidSensor:
+      var androidsensorx = command;
+      androidsensorx.Device.LastUpdateDateTime = new Date().getTime();
+      androidsensorx.Device.SocketID = wsSession.sessionID;
+
+      if (!(androidsensorx.Device.SessionID in allSessionsList)) {
+        allSessionsList[androidsensorx.Device.SessionID] = new Session(androidsensorx.Device.SessionID, wsSession);
+      }
+
+      allSessionsList[androidsensorx.Device.SessionID].allSkeletonList[androidsensorx.Device.DeviceID] = androidsensorx;
+      sendDataToSessionClients(androidsensorx.Device.SessionID, androidsensorx.Device, wsSession.sessionID, command, compressData);
+      break;
+    case deviceType.Epoc:
+      var epocx = command;
+      epocx.Device.LastUpdateDateTime = new Date().getTime();
+      epocx.Device.SocketID = wsSession.sessionID;
+
+      if (!(epocx.Device.SessionID in allSessionsList)) {
+        allSessionsList[epocx.Device.SessionID] = new Session(epocx.Device.SessionID, wsSession);
+      }
+
+      allSessionsList[epocx.Device.SessionID].allSkeletonList[epocx.Device.DeviceID] = epocx;
+      sendDataToSessionClients(epocx.Device.SessionID, epocx.Device, wsSession.sessionID, command, compressData);
+      break;
+    case deviceType.Event:
+      var eventx = command;
+      eventx.Device.LastUpdateDateTime = new Date().getTime();
+      eventx.Device.SocketID = wsSession.sessionID;
+
+      if (!(eventx.Device.SessionID in allSessionsList)) {
+        allSessionsList[eventx.Device.SessionID] = new Session(eventx.Device.SessionID, wsSession);
+      }
+
+      allSessionsList[eventx.Device.SessionID].allSkeletonList[eventx.Device.DeviceID] = eventx;
+      sendDataToSessionClients(eventx.Device.SessionID, eventx.Device, wsSession.sessionID, command, compressData);
+      break;
     default:
-      text = "Looking forward to the Weekend";
+      // default behaviour
       break;
   }
 }
@@ -516,7 +580,7 @@ function deviceCommand(device, senderSocketID) {
 
   if (!(device.SessionID in allSessionsList))
     return;
-  
+
   // Change device exceptions
   for (var key in allSessionsList[device.SessionID].allWebSocketSessionList) {
     wsSessionx = allSessionsList[device.SessionID].allWebSocketSessionList[key];

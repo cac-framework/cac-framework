@@ -9,7 +9,7 @@ var Session = require('./constructors.js').Session,
 
 // Session and channel settings containers
 var allSessionsList = {},
-allStreamChannelSettings = {};
+  allStreamChannelSettings = {};
 
 // Create a WebSocket server 
 var wss = new WebSocketServer({ port: 8080 });
@@ -44,101 +44,50 @@ function getDeviceName(deviceCode) {
 /**
  * @function deviceControllerCommand
  * @description - description
- * @param {String} command - command
+ * @param {Object} devicex - An object containing a device object
  * @param {String} compressData - compressData
- * @param {Object} wsSession - wsSession
+ * @param {Object} wsSession - A WebSocket session
  */
-function deviceControllerCommand(command, compressData, wsSession) {
-   switch (command.Device.DeviceType) {
+function deviceControllerCommand(devicex, compressData, wsSession) {
+
+  var device = devicex.Device;
+
+  device.LastUpdateDateTime = new Date().getTime();
+  device.SocketID = wsSession.sessionID;
+
+  if (!(device.SessionID in allSessionsList)) {
+    allSessionsList[device.SessionID] = new Session(device.SessionID, wsSession);
+  }
+
+  switch (device.DeviceType) {
     case deviceType.Kinect:
-      var skeletonx = command;
-      skeletonx.Device.LastUpdateDateTime = new Date().getTime();
-      skeletonx.Device.SocketID = wsSession.sessionID;
-
-      if (!(skeletonx.Device.SessionID in allSessionsList)) {
-        allSessionsList[skeletonx.Device.SessionID] = new Session(skeletonx.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[skeletonx.Device.SessionID].allSkeletonList[skeletonx.Device.DeviceID] = skeletonx;
-      sendDataToSessionClients(skeletonx.Device.SessionID, skeletonx.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allSkeletonList[device.DeviceID] = devicex;
       break;
     case deviceType.Wiimote:
     case deviceType.WiiBalanceboard:
-      var wiimotex = command;
-      wiimotex.Device.LastUpdateDateTime = new Date().getTime();
-      wiimotex.Device.SocketID = wsSession.sessionID;
-
-      if (!(wiimotex.Device.SessionID in allSessionsList)) {
-        allSessionsList[wiimotex.Device.SessionID] = new Session(wiimotex.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[wiimotex.Device.SessionID].allWiimoteList[wiimotex.Device.DeviceID] = wiimotex;
-      sendDataToSessionClients(wiimotex.Device.SessionID, wiimotex.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allWiimoteList[device.DeviceID] = devicex;
       break;
     case deviceType.Mindwave:
-      var mindwavex = command;
-      mindwavex.Device.LastUpdateDateTime = new Date().getTime();
-      mindwavex.Device.SocketID = wsSession.sessionID;
-
-      if (!(mindwavex.Device.SessionID in allSessionsList)) {
-        allSessionsList[mindwavex.Device.SessionID] = new Session(mindwavex.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[mindwavex.Device.SessionID].allMindwaveList[mindwavex.Device.DeviceID] = mindwavex;
-      sendDataToSessionClients(mindwavex.Device.SessionID, mindwavex.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allMindwaveList[device.DeviceID] = devicex;
       break;
     case deviceType.RGBVideo:
-      var rgbvIdeox = command;
-      rgbvIdeox.Device.LastUpdateDateTime = new Date().getTime();
-      rgbvIdeox.Device.SocketID = wsSession.sessionID;
-
-      if (!(rgbvIdeox.Device.SessionID in allSessionsList)) {
-        allSessionsList[rgbvIdeox.Device.SessionID] = new Session(rgbvIdeox.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[rgbvIdeox.Device.SessionID].allColorVideoList[rgbvIdeox.Device.DeviceID] = rgbvIdeox;
-      sendDataToSessionClients(rgbvIdeox.Device.SessionID, rgbvIdeox.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allColorVideoList[device.DeviceID] = devicex;
       break;
     case deviceType.AndroidSensor:
-      var androidsensorx = command;
-      androidsensorx.Device.LastUpdateDateTime = new Date().getTime();
-      androidsensorx.Device.SocketID = wsSession.sessionID;
-
-      if (!(androidsensorx.Device.SessionID in allSessionsList)) {
-        allSessionsList[androidsensorx.Device.SessionID] = new Session(androidsensorx.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[androidsensorx.Device.SessionID].allAndroidSensorList[androidsensorx.Device.DeviceID] = androidsensorx;
-      sendDataToSessionClients(androidsensorx.Device.SessionID, androidsensorx.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allAndroidSensorList[device.DeviceID] = devicex;
       break;
     case deviceType.Epoc:
-      var epocx = command;
-      epocx.Device.LastUpdateDateTime = new Date().getTime();
-      epocx.Device.SocketID = wsSession.sessionID;
-
-      if (!(epocx.Device.SessionID in allSessionsList)) {
-        allSessionsList[epocx.Device.SessionID] = new Session(epocx.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[epocx.Device.SessionID].allEpocList[epocx.Device.DeviceID] = epocx;
-      sendDataToSessionClients(epocx.Device.SessionID, epocx.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allEpocList[device.DeviceID] = devicex;
       break;
     case deviceType.Event:
-      var eventx = command;
-      eventx.Device.LastUpdateDateTime = new Date().getTime();
-      eventx.Device.SocketID = wsSession.sessionID;
-
-      if (!(eventx.Device.SessionID in allSessionsList)) {
-        allSessionsList[eventx.Device.SessionID] = new Session(eventx.Device.SessionID, wsSession);
-      }
-
-      allSessionsList[eventx.Device.SessionID].allEventList[eventx.Device.DeviceID] = eventx;
-      sendDataToSessionClients(eventx.Device.SessionID, eventx.Device, wsSession.sessionID, command, compressData);
+      allSessionsList[device.SessionID].allEventList[device.DeviceID] = devicex;
       break;
     default:
       // default behaviour
       break;
   }
+
+  sendDataToSessionClients(device.SessionID, device, wsSession.sessionID, devicex, compressData);
 }
 
 /**

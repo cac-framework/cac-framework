@@ -49,7 +49,7 @@ function getDeviceName(deviceCode) {
  * @param {Object} wsSession - wsSession
  */
 function deviceControllerCommand(command, compressData, wsSession) {
-  switch (command.Device.DeviceType) {
+   switch (command.Device.DeviceType) {
     case deviceType.Kinect:
       var skeletonx = command;
       skeletonx.Device.LastUpdateDateTime = new Date().getTime();
@@ -72,7 +72,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
         allSessionsList[wiimotex.Device.SessionID] = new Session(wiimotex.Device.SessionID, wsSession);
       }
 
-      allSessionsList[wiimotex.Device.SessionID].allSkeletonList[wiimotex.Device.DeviceID] = wiimotex;
+      allSessionsList[wiimotex.Device.SessionID].allWiimoteList[wiimotex.Device.DeviceID] = wiimotex;
       sendDataToSessionClients(wiimotex.Device.SessionID, wiimotex.Device, wsSession.sessionID, command, compressData);
       break;
     case deviceType.Mindwave:
@@ -84,7 +84,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
         allSessionsList[mindwavex.Device.SessionID] = new Session(mindwavex.Device.SessionID, wsSession);
       }
 
-      allSessionsList[mindwavex.Device.SessionID].allSkeletonList[mindwavex.Device.DeviceID] = mindwavex;
+      allSessionsList[mindwavex.Device.SessionID].allMindwaveList[mindwavex.Device.DeviceID] = mindwavex;
       sendDataToSessionClients(mindwavex.Device.SessionID, mindwavex.Device, wsSession.sessionID, command, compressData);
       break;
     case deviceType.RGBVideo:
@@ -96,7 +96,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
         allSessionsList[rgbvIdeox.Device.SessionID] = new Session(rgbvIdeox.Device.SessionID, wsSession);
       }
 
-      allSessionsList[rgbvIdeox.Device.SessionID].allSkeletonList[rgbvIdeox.Device.DeviceID] = rgbvIdeox;
+      allSessionsList[rgbvIdeox.Device.SessionID].allColorVideoList[rgbvIdeox.Device.DeviceID] = rgbvIdeox;
       sendDataToSessionClients(rgbvIdeox.Device.SessionID, rgbvIdeox.Device, wsSession.sessionID, command, compressData);
       break;
     case deviceType.AndroidSensor:
@@ -108,7 +108,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
         allSessionsList[androidsensorx.Device.SessionID] = new Session(androidsensorx.Device.SessionID, wsSession);
       }
 
-      allSessionsList[androidsensorx.Device.SessionID].allSkeletonList[androidsensorx.Device.DeviceID] = androidsensorx;
+      allSessionsList[androidsensorx.Device.SessionID].allAndroidSensorList[androidsensorx.Device.DeviceID] = androidsensorx;
       sendDataToSessionClients(androidsensorx.Device.SessionID, androidsensorx.Device, wsSession.sessionID, command, compressData);
       break;
     case deviceType.Epoc:
@@ -120,7 +120,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
         allSessionsList[epocx.Device.SessionID] = new Session(epocx.Device.SessionID, wsSession);
       }
 
-      allSessionsList[epocx.Device.SessionID].allSkeletonList[epocx.Device.DeviceID] = epocx;
+      allSessionsList[epocx.Device.SessionID].allEpocList[epocx.Device.DeviceID] = epocx;
       sendDataToSessionClients(epocx.Device.SessionID, epocx.Device, wsSession.sessionID, command, compressData);
       break;
     case deviceType.Event:
@@ -132,7 +132,7 @@ function deviceControllerCommand(command, compressData, wsSession) {
         allSessionsList[eventx.Device.SessionID] = new Session(eventx.Device.SessionID, wsSession);
       }
 
-      allSessionsList[eventx.Device.SessionID].allSkeletonList[eventx.Device.DeviceID] = eventx;
+      allSessionsList[eventx.Device.SessionID].allEventList[eventx.Device.DeviceID] = eventx;
       sendDataToSessionClients(eventx.Device.SessionID, eventx.Device, wsSession.sessionID, command, compressData);
       break;
     default:

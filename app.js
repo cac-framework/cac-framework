@@ -166,16 +166,29 @@ function deviceCommand(device, senderSocketID) {
   if (!(device.SessionID in allSessionsList))
     return;
 
+  var dev = new Device();
+  dev.id = device.ID;
+  dev.deviceID = device.DeviceID;
+  dev.publicIP = device.PublicIP;
+  dev.lanIP = device.LanIP;
+  dev.guid = device.GUID;
+  dev.deviceType = device.DeviceType;
+  dev.lastUpdateDateTime = device.LastUpdateDate;
+  dev.socketID = device.SocketID;
+  dev.sessionID = device.SessionID;
+  dev.deviceExceptionCmd = device.DeviceExceptionCmd;
+  dev.obligatoryTransmission = device.ObligatoryTransmission;
+
   // Change device exceptions
   for (var key in allSessionsList[device.SessionID].allWebSocketSessionList) {
     wsSessionx = allSessionsList[device.SessionID].allWebSocketSessionList[key];
 
     if (wsSessionx.session.sessionID === senderSocketID) {
-      if (device.DeviceExceptionCmd == deviceExceptionCmd.addException)
-        wsSessionx.addDeviceException(device);
-      else if (device.DeviceExceptionCmd == deviceExceptionCmd.removeException)
-        wsSessionx.removeDeviceException(device);
-      else if (device.DeviceExceptionCmd == deviceExceptionCmd.clearAllExceptions)
+      if (dev.deviceExceptionCmd === deviceExceptionCmd.addException)
+        wsSessionx.addDeviceException(dev);
+      else if (dev.deviceExceptionCmd === deviceExceptionCmd.removeException)
+        wsSessionx.removeDeviceException(dev);
+      else if (dev.deviceExceptionCmd === deviceExceptionCmd.clearAllExceptions)
         wsSessionx.clearAllDeviceException();
     }
 

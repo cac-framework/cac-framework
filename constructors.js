@@ -191,10 +191,10 @@ function WebSocketDeviceSession() {
  */
 function Device() {
   this.id = 0;
-  this.deviceID = "";     //in case of two connected wiimotes the guid, lanip, publicip and devicetype will be identical. The ID will be used tounoque identify them
+  this.deviceID = ""; // in case of two connected wiimotes the guid, lanip, publicip and devicetype will be identical. The ID will be used to unique identify them
   this.publicIP = "";
   this.lanIP = "";
-  this.gUID = "";
+  this.guid = "";
   this.deviceType = deviceType.Unknown;
   this.lastUpdateDateTime = new Date().getTime();
   this.socketID = "";

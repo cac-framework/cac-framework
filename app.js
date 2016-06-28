@@ -228,7 +228,7 @@ function onDataReceived(wsSession, message) {
             return;
           }
 
-          if (!allSessionsList.sessionID) {
+          if (!allSessionsList[sessionID]) {
             var sessionx = new Session(sessionID, wsSession);
             allSessionsList[sessionID] = sessionx;
           }

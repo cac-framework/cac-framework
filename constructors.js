@@ -131,7 +131,7 @@ function WebSocketDeviceSession() {
    * @return {Boolean} - A boolean value indicating whether the channel is free or not
    */
   this.streamChannelIsFree = function (deviceName) {
-    if (allStreamChannelSettings[deviceName].SyncOn == false)
+    if (allStreamChannelSettings[deviceName].syncOn === false)
       return true;
     return allStreamChannelSettings[deviceName].channelFree;
   }

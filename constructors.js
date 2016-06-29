@@ -75,13 +75,14 @@ function WebSocketDeviceSession() {
     device.lastUpdateDateTime = new Date().getTime();
 
     var deviceIndex = this.findkDeviceException(device);
-    if (deviceIndex < 0)
-      return false;
-    else {
+
+    if (deviceIndex >= 0) {
       this.receiveExceptions.splice(deviceIndex, 1);
       return true;
     }
-
+    else
+      return false;
+      
   }
 
   /**
@@ -137,28 +138,47 @@ function WebSocketDeviceSession() {
   }
 
   /**
- * @function findkDeviceException
- * @description - findkDeviceException
- * @param  {String} deviceException - deviceException
- * @return {Number} - The index of the deviceException found in the receiveExceptions. Otherwise, it returns -1.
- */
+   * @function findkDeviceException
+   * @description - findkDeviceException
+   * @param  {String} deviceException - deviceException
+   * @return {Number} - The index of the deviceException found in the receiveExceptions. Otherwise, it returns -1.
+   */
+  /*
+    this.findkDeviceException = function (deviceException) {
+  
+      for (var i = 0; i < this.receiveExceptions.length; i++) {
+        if (this.receiveExceptions[i].deviceType !== deviceType.unknown) {
+          if (this.receiveExceptions[i].deviceType !== deviceException.deviceType)
+            continue;
+        }
+  
+        if ((this.receiveExceptions[i].deviceID !== null) && (this.receiveExceptions[i].deviceID !== "")) {
+          if (this.receiveExceptions[i].deviceID !== deviceException.deviceID)
+            continue;
+        }
+  
+        return i;
+      }
+  
+      return -1;
+    }
+    */
+
   this.findkDeviceException = function (deviceException) {
 
-    for (var i = 0; i < this.receiveExceptions.length; i++) {
-      if (this.receiveExceptions[i].deviceType !== deviceType.unknown) {
-        if (this.receiveExceptions[i].deviceType !== deviceException.deviceType)
-          continue;
-      }
+    var exception;
+    var exceptionsLength = this.receiveExceptions.length;
+    var index = -1;
 
-      if ((this.receiveExceptions[i].deviceID !== null) && (this.receiveExceptions[i].deviceID !== "")) {
-        if (this.receiveExceptions[i].deviceID !== deviceException.deviceID)
-          continue;
+    for (var i = 0; i < exceptionsLength; i++) {
+      var exception = this.receiveExceptions[i];
+      if ((exception.deviceType === deviceType.unknown) && (exception.deviceType === deviceException.deviceType)) {
+        continue;
       }
-
-      return i;
+      index = i;
     }
 
-    return -1;
+    return index;
   }
 
   /**

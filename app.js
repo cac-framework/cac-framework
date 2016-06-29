@@ -148,7 +148,7 @@ function sendDataToSessionClients(sessionID, deviceSource, senderSocketID, data_
         // If a client has requested exception for this device, continue with the next WebSocket session
         if (deviceSource != null) {
           var foundIndex = wsSession.findkDeviceException(deviceSource);
-          if (foundIndex > -1)
+          if (foundIndex >= 0)
             continue;
         }
 

@@ -22,9 +22,37 @@ wss.on('connection', function connection(ws) {
     onDataReceived(ws, message);
   });
 
+  ws.on('close', function (code, message) {
+    for (var sKey in allSessionsList) {
+      var wsSessions = allSessionsList[sKey].allWebSocketSessionList;
+      for (var wsKey in wsSessions) {
+        delete wsSessions[ws.sessionID];
+      }
+    }
+  });
+
   ws.send('Connection established.'); // Send message
 
 });
+
+function convertToDevice(device) {
+
+  var devicex = new Device();
+
+  devicex.id = device.ID;
+  devicex.deviceID = device.DeviceID;
+  devicex.publicIP = device.PublicIP;
+  devicex.lanIP = device.LanIP;
+  devicex.guid = device.GUID;
+  devicex.deviceType = device.DeviceType;
+  devicex.lastUpdateDateTime = device.LastUpdateDateTime;
+  devicex.socketID = device.SocketID;
+  devicex.sessionID = device.SessionID;
+  devicex.deviceExceptionCmd = device.DeviceExceptionCmd;
+  devicex.obligatoryTransmission = device.ObligatoryTransmission;
+
+  return devicex;
+}
 
 /**
  * @function getDeviceName
@@ -50,44 +78,44 @@ function getDeviceName(deviceCode) {
  */
 function deviceControllerCommand(devicex, compressData, wsSession) {
 
-  var device = devicex.Device;
+  var device = convertToDevice(devicex.Device);
 
-  device.LastUpdateDateTime = new Date().getTime();
-  device.SocketID = wsSession.sessionID;
+  device.lastUpdateDateTime = new Date().getTime();
+  device.socketID = wsSession.sessionID;
 
-  if (!(device.SessionID in allSessionsList)) {
-    allSessionsList[device.SessionID] = new Session(device.SessionID, wsSession);
+  if (!(device.sessionID in allSessionsList)) {
+    allSessionsList[device.sessionID] = new Session(device.sessionID, wsSession);
   }
 
-  switch (device.DeviceType) {
+  switch (device.deviceType) {
     case deviceType.Kinect:
-      allSessionsList[device.SessionID].allSkeletonList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allSkeletonList[device.deviceID] = devicex;
       break;
     case deviceType.Wiimote:
     case deviceType.WiiBalanceboard:
-      allSessionsList[device.SessionID].allWiimoteList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allWiimoteList[device.deviceID] = devicex;
       break;
     case deviceType.Mindwave:
-      allSessionsList[device.SessionID].allMindwaveList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allMindwaveList[device.deviceID] = devicex;
       break;
     case deviceType.RGBVideo:
-      allSessionsList[device.SessionID].allColorVideoList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allColorVideoList[device.deviceID] = devicex;
       break;
     case deviceType.AndroidSensor:
-      allSessionsList[device.SessionID].allAndroidSensorList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allAndroidSensorList[device.deviceID] = devicex;
       break;
     case deviceType.Epoc:
-      allSessionsList[device.SessionID].allEpocList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allEpocList[device.deviceID] = devicex;
       break;
     case deviceType.Event:
-      allSessionsList[device.SessionID].allEventList[device.DeviceID] = devicex;
+      allSessionsList[device.sessionID].allEventList[device.deviceID] = devicex;
       break;
     default:
       // default behaviour
       break;
   }
 
-  sendDataToSessionClients(device.SessionID, device, wsSession.sessionID, devicex, compressData);
+  sendDataToSessionClients(device.sessionID, device, wsSession.sessionID, devicex, compressData);
 }
 
 /**
@@ -110,12 +138,12 @@ function sendDataToSessionClients(sessionID, deviceSource, senderSocketID, data_
     for (var key in allSessionsList[sessionID].allWebSocketSessionList) {
 
       var wsSession = allSessionsList[sessionID].allWebSocketSessionList[key];
-      var deviceName = getDeviceName(deviceSource.DeviceType);
+      var deviceName = getDeviceName(deviceSource.deviceType);
 
       if ((wsSession === null) || (wsSession.session === null) || (wsSession.session.sessionID === null) || (wsSession.streamChannelIsFree(deviceName) === false))
         continue;
 
-      if ((wsSession.session.sessionID !== senderSocketID) && ((wsSession.transmissionInProgress === false) || (deviceSource.ObligatoryTransmission === true))) {
+      if ((wsSession.session.sessionID !== senderSocketID) && ((wsSession.transmissionInProgress === false) || (deviceSource.obligatoryTransmission === true))) {
 
         // If a client has requested exception for this device, continue with the next WebSocket session
         if (deviceSource != null) {
@@ -130,13 +158,13 @@ function sendDataToSessionClients(sessionID, deviceSource, senderSocketID, data_
           if (wsSession.receiveCompressedData == true) {
             //compressData();
           } else {
-            wsSession.setChannelStatus(getDeviceName(deviceSource.DeviceType), false); // channel not free
+            wsSession.setChannelStatus(getDeviceName(deviceSource.deviceType), false); // channel not free
             wsSession.session.send(JSON.stringify(data_));
           }
         }
         catch (err) {
           wsSession.transmissionInProgress = false;
-          wsSession.setChannelStatus(getDeviceName(deviceSource.DeviceType), true); // channel free
+          wsSession.setChannelStatus(getDeviceName(deviceSource.deviceType), true); // channel free
         }
         wsSession.transmissionInProgress = false;
       }
@@ -166,18 +194,7 @@ function deviceCommand(device, senderSocketID) {
   if (!(device.SessionID in allSessionsList))
     return;
 
-  var dev = new Device();
-  dev.id = device.ID;
-  dev.deviceID = device.DeviceID;
-  dev.publicIP = device.PublicIP;
-  dev.lanIP = device.LanIP;
-  dev.guid = device.GUID;
-  dev.deviceType = device.DeviceType;
-  dev.lastUpdateDateTime = device.LastUpdateDate;
-  dev.socketID = device.SocketID;
-  dev.sessionID = device.SessionID;
-  dev.deviceExceptionCmd = device.DeviceExceptionCmd;
-  dev.obligatoryTransmission = device.ObligatoryTransmission;
+  var dev = convertToDevice(device);
 
   // Change device exceptions
   for (var key in allSessionsList[device.SessionID].allWebSocketSessionList) {
@@ -256,7 +273,7 @@ function onDataReceived(wsSession, message) {
         for (var key in allSessionsList) {
           if (allSessionsList.hasOwnProperty(key)) {
             var session = allSessionsList[key];
-            if (session.allWebSocketSessionList[wsSession.sessionID]) {
+            if (typeof session.allWebSocketSessionList[wsSession.sessionID] !== 'undefined') {
               wsDeviceSession = session.allWebSocketSessionList[wsSession.sessionID];
               delete session.allWebSocketSessionList[wsSession.sessionID];
             }

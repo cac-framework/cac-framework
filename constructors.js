@@ -172,7 +172,6 @@ function WebSocketDeviceSession() {
 
     for (var i = 0; i < exceptionsLength; i++) {
       var exception = this.receiveExceptions[i];
-<<<<<<< HEAD
       if (exception.deviceType !== deviceType.unknown){
          if(exception.deviceType !== deviceException.deviceType)
             continue;
@@ -183,14 +182,6 @@ function WebSocketDeviceSession() {
       }
       index = i;
     }
-=======
-      if ((exception.deviceType === deviceType.unknown) && (exception.deviceType === deviceException.deviceType)) {
-        continue;
-      }
-      index = i;
-    }
-
->>>>>>> ab5f90d94c9c504b34950b5943e7c813a0cdcad2
     return index;
   }
 

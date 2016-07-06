@@ -11,6 +11,15 @@ var Session = require('./constructors.js').Session,
 var allSessionsList = {},
   allStreamChannelSettings = {};
 
+function isEmpty(obj) {
+    for(var prop in obj) {
+        if(obj.hasOwnProperty(prop))
+            return false;
+    }
+
+    return true ;
+}
+
 // Create a WebSocket server 
 var wss = new WebSocketServer({ port: 8083 });
 
@@ -27,6 +36,9 @@ wss.on('connection', function connection(ws) {
       var wsSessions = allSessionsList[sKey].allWebSocketSessionList;
       for (var wsKey in wsSessions) {
         delete wsSessions[ws.sessionID];
+        if(isEmpty(wsSessions)) {
+          delete allSessionsList[sKey];
+        }
       }
     }
   });

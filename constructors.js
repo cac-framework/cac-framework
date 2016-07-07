@@ -134,6 +134,18 @@ function WebSocketDeviceSession() {
   this.streamChannelIsFree = function (deviceName) {
     if (allStreamChannelSettings[deviceName].syncOn === false)
       return true;
+    //console.log((new Date).getTime()); 
+    // if(deviceName === "Kinect")
+    // {
+    //     console.log((new Date).getTime() );
+    //     console.log((parseInt(allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) < (new Date).getTime()); 
+    //     console.log((parseInt(allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) - (new Date).getTime()); 
+    // } 
+    if ( (parseInt(allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) < (new Date).getTime())
+    {
+      //this.setChannelStatus (deviceName, true);
+      allStreamChannelSettings[deviceName].channelFree = true;
+    }
     return allStreamChannelSettings[deviceName].channelFree;
   }
 
@@ -193,6 +205,8 @@ function WebSocketDeviceSession() {
  */
   this.setChannelStatus = function (deviceType, setChannelFree) {
     allStreamChannelSettings[deviceType].channelFree = setChannelFree;
+    if(setChannelFree === false)
+      allStreamChannelSettings[deviceType].syncOnLastMs = parseInt((new Date).getTime());
   }
 
   /**
@@ -202,7 +216,7 @@ function WebSocketDeviceSession() {
    * @param {Boolean} setSyncOn - True if the channel is synchronised
    */
   this.setSyncStatus = function (deviceType, setSyncOn) {
-    allStreamChannelSettings[deviceType].syncOn = setSyncOn;
+    allStreamChannelSettings[deviceType].syncOn = setSyncOn;    
   }
 
   this.initiateAllStreamChannelSettings();
@@ -220,7 +234,7 @@ function Device() {
   this.lanIP = "";
   this.guid = "";
   this.deviceType = deviceType.Unknown;
-  this.lastUpdateDateTime = new Date().getTime();
+  //this.lastUpdateDateTime = new Date().getTime();
   this.socketID = "";
   this.sessionID = "";
   this.deviceExceptionCmd = deviceExceptionCmd.unknown;
@@ -235,5 +249,6 @@ function Device() {
 function streamChannelSettings(deviceType) {
   this.deviceType = deviceType;
   this.syncOn = false;
+  this.syncOnLastMs = parseInt((new Date).getTime());
   this.channelFree = true;
 };

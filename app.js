@@ -20,6 +20,19 @@ function isEmpty(obj) {
     return true ;
 }
 
+
+setInterval(function(){
+  for (var sessionValue in allSessionsList) {
+    for (var socketValue in allSessionsList[sessionValue].allWebSocketSessionList) {
+      allSessionsList[sessionValue].allWebSocketSessionList[socketValue].streamChannelIsFree("Kinect");
+      //allSessionsList[sessionValue].allWebSocketSessionList[socketValue].setSyncStatus("Kinect", false);
+      allSessionsList[sessionValue].allWebSocketSessionList[socketValue].streamChannelIsFree("RGBVideo");
+      //allSessionsList[sessionValue].allWebSocketSessionList[socketValue].setSyncStatus("RGBVideo", false);
+    }
+  }
+
+  }, 1000);
+
 // Create a WebSocket server 
 var wss = new WebSocketServer({ port: 8083 });
 

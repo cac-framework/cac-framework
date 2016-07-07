@@ -20,7 +20,7 @@ function isEmpty(obj) {
     return true ;
 }
 
-
+/*
 setInterval(function(){
   for (var sessionValue in allSessionsList) {
     for (var socketValue in allSessionsList[sessionValue].allWebSocketSessionList) {
@@ -32,7 +32,7 @@ setInterval(function(){
   }
 
   }, 1000);
-
+*/
 // Create a WebSocket server 
 var wss = new WebSocketServer({ port: 8083 });
 

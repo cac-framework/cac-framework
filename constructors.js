@@ -47,6 +47,7 @@ function WebSocketDeviceSession() {
   this.receiveExceptions = [];
   this.receiveCompressedData = false;
   this.session = {};
+  this.allStreamChannelSettings = {};
 
   // TODO - merge addDeviceException, removeDeviceException and clearAllDeviceException
   /**
@@ -102,12 +103,12 @@ function WebSocketDeviceSession() {
   this.initiateAllStreamChannelSettings = function () {
 
     var scs = {};
-    allStreamChannelSettings = {};
+    this.allStreamChannelSettings = {};
 
     for (var key in deviceType) {
       if (deviceType.hasOwnProperty(key)) {
         scs = new streamChannelSettings(deviceType[key]);
-        allStreamChannelSettings[key] = scs;
+        this.allStreamChannelSettings[key] = scs;
       }
     }
 
@@ -132,21 +133,14 @@ function WebSocketDeviceSession() {
    * @return {Boolean} - A boolean value indicating whether the channel is free or not
    */
   this.streamChannelIsFree = function (deviceName) {
-    if (allStreamChannelSettings[deviceName].syncOn === false)
+    if (this.allStreamChannelSettings[deviceName].syncOn === false)
       return true;
-    //console.log((new Date).getTime()); 
-    // if(deviceName === "Kinect")
-    // {
-    //     console.log((new Date).getTime() );
-    //     console.log((parseInt(allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) < (new Date).getTime()); 
-    //     console.log((parseInt(allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) - (new Date).getTime()); 
-    // } 
-    if ( (parseInt(allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) < (new Date).getTime())
-    {
-      //this.setChannelStatus (deviceName, true);
-      allStreamChannelSettings[deviceName].channelFree = true;
-    }
-    return allStreamChannelSettings[deviceName].channelFree;
+    //the following code resets the channel's status to free when it is not free for more than 2sec
+    //if ( (parseInt(this.allStreamChannelSettings[deviceName].syncOnLastMs) + 2000) < (new Date).getTime())
+    //{
+    //  this.allStreamChannelSettings[deviceName].channelFree = true;
+    //}
+    return this.allStreamChannelSettings[deviceName].channelFree;
   }
 
   /**
@@ -204,9 +198,9 @@ function WebSocketDeviceSession() {
  * @param {Boolean} setChannelFree - True if the channel is free
  */
   this.setChannelStatus = function (deviceType, setChannelFree) {
-    allStreamChannelSettings[deviceType].channelFree = setChannelFree;
+    this.allStreamChannelSettings[deviceType].channelFree = setChannelFree;
     if(setChannelFree === false)
-      allStreamChannelSettings[deviceType].syncOnLastMs = parseInt((new Date).getTime());
+      this.allStreamChannelSettings[deviceType].syncOnLastMs = parseInt((new Date).getTime());
   }
 
   /**
@@ -216,7 +210,7 @@ function WebSocketDeviceSession() {
    * @param {Boolean} setSyncOn - True if the channel is synchronised
    */
   this.setSyncStatus = function (deviceType, setSyncOn) {
-    allStreamChannelSettings[deviceType].syncOn = setSyncOn;    
+    this.allStreamChannelSettings[deviceType].syncOn = setSyncOn;    
   }
 
   this.initiateAllStreamChannelSettings();

@@ -122,6 +122,9 @@ function deviceControllerCommand(devicex, compressData, wsSession) {
     case deviceType.Event:
       allSessionsList[device.sessionID].allEventList[device.deviceID] = devicex;
       break;
+    case deviceType.MicrosoftBand:
+      allSessionsList[device.sessionID].allMicrosoftBandList[device.deviceID] = devicex;
+      break;
     default:
       // default behaviour
       break;

@@ -25,6 +25,7 @@ function Session(sessionID, wsSession) {
   this.allAndroidSensorList = {};
   this.allEpocList = {};
   this.allEventList = {};
+  this.allMicrosoftBandList = {};
   this.allWebSocketSessionList = {};
 
   // Add WebSockets session to ws session list

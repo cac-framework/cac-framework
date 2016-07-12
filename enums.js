@@ -14,7 +14,8 @@ var deviceType = {
   AndroidSensor: 7,
   Epoc: 8,
   Annotation: 9,
-  Event: 10
+  Event: 10,
+  MicrosoftBand: 11
 }
 
 /**

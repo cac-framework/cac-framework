@@ -356,9 +356,8 @@ function onDataReceived(wsSession, message) {
         for (var key in allSessionsList) {
           if (allSessionsList.hasOwnProperty(key)) {
             var session = allSessionsList[key];
-            for (var wsKey in session.allWebSocketSessionList) {
-              if (session.allWebSocketSessionList.hasOwnProperty(wsKey)) {
-                wsSessionx = session.allWebSocketSessionList[wsKey];
+              if (session.allWebSocketSessionList.hasOwnProperty(wsSession.sessionID)) {
+                wsSessionx = session.allWebSocketSessionList[wsSession.sessionID];
                 if (wsSessionx.session.sessionID === wsSessionx.sessionID) {
                   if (commandString.substr(0, 5) === "NEXT=")
                     wsSessionx.setChannelStatus(deviceName, true);
@@ -369,7 +368,6 @@ function onDataReceived(wsSession, message) {
                   //break;
                 }
               }
-            }
           }
         }
 

@@ -47,6 +47,71 @@ wss.on('connection', function connection(ws) {
 
 });
 
+
+
+
+
+//GIven that the certificate is self-signed, the https://localhost:8084/ shall be visited from the browser to enable us accepting the self-signed certificate.
+// Create a second SSL enabled WebSocket server 
+var cfg = {
+ ssl: true,
+ port: 8084,
+ ssl_key: 'cert/cert.key',
+ ssl_cert: 'cert/cert.cert'
+};
+
+
+var httpServ = ( cfg.ssl ) ? require('https') : require('http');
+var WebSocketServer = require('ws').Server;
+var app = null;
+// dummy request processing
+var processRequest = function( req, res ) {
+  res.writeHead(200);
+  res.end("All glory to WebSockets!\n");                  
+};
+
+var fs = require('fs');
+if ( cfg.ssl ) {
+ app = httpServ.createServer({      
+      // providing server with  SSL key/cert
+      key: fs.readFileSync( cfg.ssl_key ),
+      cert: fs.readFileSync( cfg.ssl_cert ),
+      //ca: fs.readFileSync(config.ssl.ca) //this could be probably ommited
+      //passphrase: '1234',
+      //requestCert: true,
+      //rejectUnauthorized: true
+      }, processRequest ).listen( cfg.port );
+} else {
+  app = httpServ.createServer( processRequest ).listen( cfg.port );
+}
+
+// Create a second SSL enabled WebSocket server 
+var wssssl = new WebSocketServer({ server: app });
+
+wssssl.on('connection', function connection(ws) {
+
+  ws.sessionID = ws.upgradeReq.headers["sec-websocket-key"]; // Set WebSockets ID
+
+  ws.on('message', function incoming(message) {
+    onDataReceived(ws, message);
+  });
+
+  ws.on('close', function (code, message) {
+    for (var sKey in allSessionsList) {
+      var wsSessions = allSessionsList[sKey].allWebSocketSessionList;
+      for (var wsKey in wsSessions) {
+        delete wsSessions[ws.sessionID];
+        if(isEmpty(wsSessions)) {
+          delete allSessionsList[sKey];
+        }
+      }
+    }
+  });
+
+  ws.send('Connection established.'); // Send message
+
+});
+
 function convertToDevice(device) {
 
   var devicex = new Device();

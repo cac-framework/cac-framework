@@ -57,7 +57,8 @@ var cfg = {
  ssl: true,
  port: 8084,
  ssl_key: 'cert/cert.key',
- ssl_cert: 'cert/cert.cert'
+ ssl_cert: 'cert/cert.cert',
+ ssl_pfx: 'cert/cert.pfx'
 };
 
 
@@ -74,10 +75,11 @@ var fs = require('fs');
 if ( cfg.ssl ) {
  app = httpServ.createServer({      
       // providing server with  SSL key/cert
-      key: fs.readFileSync( cfg.ssl_key ),
-      cert: fs.readFileSync( cfg.ssl_cert ),
+      //key: fs.readFileSync( cfg.ssl_key ),
+      //cert: fs.readFileSync( cfg.ssl_cert )
       //ca: fs.readFileSync(config.ssl.ca) //this could be probably ommited
-      //passphrase: '1234',
+      pfx: fs.readFileSync(cfg.ssl_pfx),
+      passphrase: '1234'
       //requestCert: true,
       //rejectUnauthorized: true
       }, processRequest ).listen( cfg.port );

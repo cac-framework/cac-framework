@@ -147,6 +147,15 @@ function getDeviceName(deviceCode) {
   return deviceName;
 }
 
+
+
+
+function getStreamingSourcesDemand(sessionID){
+  //iterates all the exceptions of all the connected clients and consolidates a source demand list
+  //which is then send to each client when it connects and to all the connected clients when another
+  //client changes its exception list
+}
+
 /**
  * @function deviceControllerCommand
  * @description - description
